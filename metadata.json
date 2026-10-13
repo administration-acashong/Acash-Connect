@@ -1,0 +1,6 @@
+{
+  "name": "Acash Connect",
+  "description": "Plateforme Officiel Academie Sportive d'Haïti ACASH - Homologué Comité Olympique International CIO. Basket 3x3, multisport, rezo 10 depatman ak dyaspora.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

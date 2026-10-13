@@ -1,0 +1,99 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isSuperAdmin() {
+      return isAuthenticated() && (
+        ('email' in request.auth.token && (
+          request.auth.token.email == 'bassianysma@gmail.com' ||
+          request.auth.token.email == 'administration@acashong.com'
+        )) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         'role' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Admin', 'Super Admin'])
+      );
+    }
+
+    function isCoach() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        'role' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['Coach', 'Antrenè'];
+    }
+
+    function isValidUserProfile(data, userId) {
+      return data.userId == userId
+        && data.email is string && data.email.size() > 3
+        && data.phone is string && data.phone.size() > 0
+        && data.bloodGroup in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+        && (data.restingBpm is int || data.restingBpm is float) && data.restingBpm > 30 && data.restingBpm < 220
+        && (data.maxBpm is int || data.maxBpm is float) && data.maxBpm > 100 && data.maxBpm < 250
+        && (data.heightCm is int || data.heightCm is float) && data.heightCm > 50 && data.heightCm < 260
+        && (data.weightKg is int || data.weightKg is float) && data.weightKg > 30 && data.weightKg < 250
+        && data.gender in ['Masculin', 'Féminin', 'Autre']
+        && (!('role' in data) || data.role in ['Athlète', 'Atlèt', 'Coach', 'Antrenè', 'Parent', 'Paran', 'Supporter', 'Sipòtè', 'Admin', 'Super Admin'])
+        && (!('fullName' in data) || data.fullName is string)
+        && (!('positionOrSpecialty' in data) || data.positionOrSpecialty is string)
+        && (!('teamOrClub' in data) || data.teamOrClub is string)
+        && (!('bio' in data) || data.bio is string)
+        && (!('city' in data) || data.city is string)
+        && (!('fibaRanking' in data) || (data.fibaRanking is int || data.fibaRanking is float))
+        && (!('fieldGoalPercentage' in data) || (data.fieldGoalPercentage is int || data.fieldGoalPercentage is float))
+        && (!('twoPointPercentage' in data) || (data.twoPointPercentage is int || data.twoPointPercentage is float))
+        && (!('reboundsPerGame' in data) || (data.reboundsPerGame is int || data.reboundsPerGame is float))
+        && (!('assists' in data) || (data.assists is int || data.assists is float))
+        && (!('assistsPerGame' in data) || (data.assistsPerGame is int || data.assistsPerGame is float))
+        && (!('gamesPlayed' in data) || (data.gamesPlayed is int || data.gamesPlayed is float))
+        && (!('pointsPerGame' in data) || (data.pointsPerGame is int || data.pointsPerGame is float))
+        && (!('primaryPosition' in data) || data.primaryPosition is string)
+        && (!('secondaryPosition' in data) || data.secondaryPosition is string)
+        && (!('positions' in data) || data.positions is list)
+        && (!('skillLevel' in data) || data.skillLevel is string)
+        && (!('shootingSkill' in data) || (data.shootingSkill is int || data.shootingSkill is float))
+        && (!('defenseSkill' in data) || (data.defenseSkill is int || data.defenseSkill is float))
+        && (!('playmakingSkill' in data) || (data.playmakingSkill is int || data.playmakingSkill is float))
+        && (!('physicalConditioningSkill' in data) || (data.physicalConditioningSkill is int || data.physicalConditioningSkill is float))
+        && (!('tacticalIqSkill' in data) || (data.tacticalIqSkill is int || data.tacticalIqSkill is float))
+        && (!('experienceYears' in data) || (data.experienceYears is int || data.experienceYears is float))
+        && (!('competitionLevel' in data) || data.competitionLevel is string)
+        && (!('pastClubsOrTeams' in data) || data.pastClubsOrTeams is string)
+        && (!('achievements' in data) || data.achievements is string)
+        && (!('certifications' in data) || data.certifications is string)
+        && (!('coachingPhilosophy' in data) || data.coachingPhilosophy is string)
+        && (!('hourlyRate' in data) || data.hourlyRate is string)
+        && (!('notes' in data) || data.notes is string)
+        && (!('selectedSport' in data) || data.selectedSport is string)
+        && (!('secondarySports' in data) || data.secondarySports is list)
+        && (!('selectedDepartment' in data) || data.selectedDepartment is string)
+        && (!('selectedCommune' in data) || data.selectedCommune is string)
+        && (!('createdAt' in data) || (data.createdAt is timestamp && data.createdAt <= request.time))
+        && (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    match /users/{userId} {
+      allow read: if isOwner(userId)
+                   || isSuperAdmin()
+                   || (isCoach() && resource.data.role in ['Athlète', 'Atlèt']);
+      
+      allow create: if (isOwner(userId) || isSuperAdmin())
+                    && isValidUserProfile(request.resource.data, userId);
+
+      allow update: if (isOwner(userId)
+                       || isSuperAdmin()
+                       || (isCoach() && resource.data.role in ['Athlète', 'Atlèt']))
+                    && isValidUserProfile(request.resource.data, userId)
+                    && request.resource.data.userId == resource.data.userId
+                    && (!('createdAt' in resource.data) || request.resource.data.createdAt == resource.data.createdAt);
+
+      allow delete: if isOwner(userId) || isSuperAdmin();
+    }
+  }
+}

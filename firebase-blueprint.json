@@ -1,0 +1,42 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Profil biométrique et sportif de l'athlète ou du coach sur Acash Connect",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Identifiant Firebase Auth de l'utilisateur" },
+        "fullName": { "type": "string", "description": "Nom et prénom de l'athlète ou du coach" },
+        "email": { "type": "string", "format": "email", "description": "Adresse email de contact" },
+        "phone": { "type": "string", "description": "Numéro de téléphone" },
+        "bloodGroup": { "type": "string", "enum": ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"], "description": "Groupe sanguin" },
+        "restingBpm": { "type": "integer", "description": "BPM au repos" },
+        "maxBpm": { "type": "integer", "description": "BPM maximum à l'effort 3x3" },
+        "heightCm": { "type": "number", "description": "Hauteur en centimètres" },
+        "weightKg": { "type": "number", "description": "Poids en kilogrammes" },
+        "gender": { "type": "string", "enum": ["Masculin", "Féminin", "Autre"], "description": "Sexe" },
+        "role": { "type": "string", "enum": ["Athlète", "Coach"], "description": "Rôle" },
+        "positionOrSpecialty": { "type": "string", "description": "Position 3x3 ou spécialité de coaching" },
+        "teamOrClub": { "type": "string", "description": "Club ou équipe 3x3" },
+        "bio": { "type": "string", "description": "Bio et objectifs sportifs" },
+        "city": { "type": "string", "description": "Ville ou pays" },
+        "fieldGoalPercentage": { "type": "number", "description": "Pourcentage de réussite aux tirs (FG%)" },
+        "twoPointPercentage": { "type": "number", "description": "Pourcentage aux tirs à 2-points 3X3" },
+        "reboundsPerGame": { "type": "number", "description": "Rebonds par match (RPG)" },
+        "assists": { "type": "integer", "description": "Passes décisives totales" },
+        "assistsPerGame": { "type": "number", "description": "Passes décisives par match (APG)" },
+        "gamesPlayed": { "type": "integer", "description": "Nombre de matchs 3x3 joués" },
+        "pointsPerGame": { "type": "number", "description": "Points marqués par match (PPG)" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Date de création serverTimestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Date de mise à jour serverTimestamp" }
+      },
+      "required": ["userId", "email", "phone", "bloodGroup", "restingBpm", "maxBpm", "heightCm", "weightKg", "gender"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Profils utilisateurs sécurisés par UID"
+    }
+  }
+}
